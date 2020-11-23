@@ -154,13 +154,18 @@ open class PhoneNumberTextField: UITextField, UITextFieldDelegate {
 
     // MARK: Status
 
-    public var currentRegion: String {
+    @objc public var currentRegion: String {
         return self.partialFormatter.currentRegion
     }
 
-    public var nationalNumber: String {
+    @objc public var nationalNumber: String {
         let rawNumber = self.text ?? String()
         return self.partialFormatter.nationalNumber(from: rawNumber)
+    }
+    
+    @objc public var countryCode: String? {
+        guard let countryCode = phoneNumberKit.countryCode(for: currentRegion)?.description else { return nil }
+        return "+" + countryCode
     }
 
     public var isValidNumber: Bool {
@@ -181,6 +186,19 @@ open class PhoneNumberTextField: UITextField, UITextFieldDelegate {
         guard let rawNumber = self.text else { return nil }
         do {
             return try phoneNumberKit.parse(rawNumber, withRegion: currentRegion)
+        } catch {
+            return nil
+        }
+    }
+    
+    /**
+     Returns the current valid phone number.
+     - returns: PhoneNumber?
+     */
+    @objc public var phoneNumberString: String? {
+        guard let rawNumber = self.text else { return nil }
+        do {
+            return try phoneNumberKit.parse(rawNumber, withRegion: currentRegion).numberString
         } catch {
             return nil
         }
@@ -255,7 +273,7 @@ open class PhoneNumberTextField: UITextField, UITextFieldDelegate {
         super.delegate = self
     }
 
-    func internationalPrefix(for countryCode: String) -> String? {
+    @objc func internationalPrefix(for countryCode: String) -> String? {
         guard let countryCode = phoneNumberKit.countryCode(for: currentRegion)?.description else { return nil }
         return "+" + countryCode
     }
