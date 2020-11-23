@@ -38,27 +38,14 @@ open class PhoneNumberTextField: UITextField, UITextFieldDelegate {
         super.text = newValue
     }
 
-    private lazy var _defaultRegion: String = PhoneNumberKit.defaultRegionCode()
-
     /// Override region to set a custom region. Automatically uses the default region code.
-    open var defaultRegion: String {
-        get {
-            return self._defaultRegion
-        }
-        @available(
-            *,
-            deprecated,
-            message: """
-                The setter of defaultRegion is deprecated,
-                please override defaultRegion in a subclass instead.
-            """
-        )
-        set {
-            self.partialFormatter.defaultRegion = newValue
+    @objc open var defaultRegion: String = PhoneNumberKit.defaultRegionCode() {
+        didSet {
+            self.partialFormatter.defaultRegion = defaultRegion
         }
     }
 
-    public var withPrefix: Bool = true {
+    @objc public var withPrefix: Bool = true {
         didSet {
             self.partialFormatter.withPrefix = self.withPrefix
             if self.withPrefix == false {
@@ -72,7 +59,7 @@ open class PhoneNumberTextField: UITextField, UITextFieldDelegate {
         }
     }
 
-    public var withFlag: Bool = false {
+    @objc public var withFlag: Bool = false {
         didSet {
             leftView = self.withFlag ? self.flagButton : nil
             leftViewMode = self.withFlag ? .always : .never
@@ -80,7 +67,7 @@ open class PhoneNumberTextField: UITextField, UITextFieldDelegate {
         }
     }
 
-    public var withExamplePlaceholder: Bool = false {
+    @objc public var withExamplePlaceholder: Bool = false {
         didSet {
             if self.withExamplePlaceholder {
                 self.updatePlaceholder()
@@ -127,7 +114,7 @@ open class PhoneNumberTextField: UITextField, UITextFieldDelegate {
     }
 
     @available(iOS 11.0, *)
-    public var withDefaultPickerUI: Bool {
+    @objc public var withDefaultPickerUI: Bool {
         get { _withDefaultPickerUI }
         set { _withDefaultPickerUI = newValue }
     }
@@ -273,7 +260,7 @@ open class PhoneNumberTextField: UITextField, UITextFieldDelegate {
         return "+" + countryCode
     }
 
-    open func updateFlag() {
+    @objc open func updateFlag() {
         guard self.withFlag else { return }
         let flagBase = UnicodeScalar("🇦").value - UnicodeScalar("A").value
 
@@ -438,7 +425,7 @@ open class PhoneNumberTextField: UITextField, UITextFieldDelegate {
         }
 
         // we change the default region to be the one most recently typed
-        self._defaultRegion = self.currentRegion
+        self.defaultRegion = self.currentRegion
         self.partialFormatter.defaultRegion = self.currentRegion
         self.updateFlag()
         self.updatePlaceholder()
@@ -503,9 +490,9 @@ open class PhoneNumberTextField: UITextField, UITextFieldDelegate {
 @available(iOS 11.0, *)
 extension PhoneNumberTextField: CountryCodePickerDelegate {
 
-    public func countryCodePickerViewControllerDidPickCountry(_ country: CountryCodePickerViewController.Country) {
+    func countryCodePickerViewControllerDidPickCountry(_ country: CountryCodePickerViewController.Country) {
         text = isEditing ? "+" + country.prefix : ""
-        _defaultRegion = country.code
+        defaultRegion = country.code
         partialFormatter.defaultRegion = country.code
         updateFlag()
         updatePlaceholder()

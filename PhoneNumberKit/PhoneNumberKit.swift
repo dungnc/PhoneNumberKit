@@ -20,6 +20,11 @@ public final class PhoneNumberKit: NSObject {
     let regexManager = RegexManager()
 
     // MARK: Lifecycle
+    
+    public override init() {
+        self.metadataManager = MetadataManager(metadataCallback: PhoneNumberKit.defaultMetadataCallback)
+        self.parseManager = ParseManager(metadataManager: self.metadataManager, regexManager: self.regexManager)
+    }
 
     public init(metadataCallback: @escaping MetadataCallback = PhoneNumberKit.defaultMetadataCallback) {
         self.metadataManager = MetadataManager(metadataCallback: metadataCallback)
@@ -48,6 +53,34 @@ public final class PhoneNumberKit: NSObject {
 
         return try self.parseManager.parse(numberStringWithPlus, withRegion: region, ignoreType: ignoreType)
     }
+    
+   @objc public func parse(_ numberString: String, region: String) -> String? {
+        var numberStringWithPlus = numberString
+
+        do {
+            return try self.parseManager.parse(numberString, withRegion: region, ignoreType: false).regionID
+        } catch {
+            if numberStringWithPlus.first != "+" {
+                numberStringWithPlus = "+" + numberStringWithPlus
+            }
+        }
+
+        return try? self.parseManager.parse(numberStringWithPlus, withRegion: region, ignoreType: false).regionID
+    }
+    
+    @objc public func parseCountryNumber(_ numberString: String, region: String) -> UInt64 {
+         var numberStringWithPlus = numberString
+
+         do {
+            return try self.parseManager.parse(numberString, withRegion: region, ignoreType: false).countryCode
+         } catch {
+             if numberStringWithPlus.first != "+" {
+                 numberStringWithPlus = "+" + numberStringWithPlus
+             }
+         }
+
+        return try! self.parseManager.parse(numberStringWithPlus, withRegion: region, ignoreType: false).countryCode
+     }
 
     /// Parses an array of number strings. Optimised for performance. Invalid numbers are ignored in the resulting array
     ///
@@ -296,13 +329,7 @@ public final class PhoneNumberKit: NSObject {
     public class func defaultRegionCode() -> String {
 #if os(iOS) && !targetEnvironment(simulator) && !targetEnvironment(macCatalyst)
         let networkInfo = CTTelephonyNetworkInfo()
-        var carrier: CTCarrier? = nil
-        if #available(iOS 12.0, *) {
-            carrier = networkInfo.serviceSubscriberCellularProviders?.values.first
-        } else {
-            carrier = networkInfo.subscriberCellularProvider
-        }
-
+        let carrier = networkInfo.subscriberCellularProvider
         if let isoCountryCode = carrier?.isoCountryCode {
             return isoCountryCode.uppercased()
         }
